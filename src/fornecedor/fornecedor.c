@@ -1,7 +1,10 @@
+#include "cep/cep.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define MAX_VALUE 5
 
@@ -14,30 +17,10 @@
 *****
 */
 
-struct cep {
-    int cep;
-    char logradouro[50], bairro[50], cidade[50], estado[3];
-};
-
 struct fornecedor {
     int codigo, cep, numLog, numTel;
     char nome[50], email[50];
 };
-
-void carregarCep(struct cep cep[MAX_VALUE]) {
-    FILE *arq = fopen("cep.txt", "r");
-
-    if (arq == NULL) {
-        printf("Erro ao abrir arquivo\n");
-        return;
-    }
-
-    int i = 0;
-    while (i < MAX_VALUE && fscanf(arq, "[%d,%49[^,],%49[^,],%49[^,],%2[^]]]\n", &cep[i].cep, cep[i].logradouro, cep[i].bairro, cep[i].cidade, cep[i].estado) == 5) {
-        i++;
-    }
-    fclose(arq);
-}
 
 bool validarCEP(int cep) {
     struct cep cepValido[MAX_VALUE] = {0};
@@ -55,14 +38,14 @@ bool validarCEP(int cep) {
     return false;
 }
 
-int menu() {
+int menu_fornecedor() {
     int op;
     printf("\n-- Cadastro Fornecedor --\n");
     printf("1 - Incluir\n");
     printf("2 - Alterar\n");
     printf("3 - Excluir\n");
     printf("4 - Consultar\n");
-    printf("5 - Consultar CEPs\n");
+    printf("5 - Limpar Tela\n");
     printf("\n");
     printf("9 - Carregar\n");
     printf("0 - Sair\n");
@@ -72,7 +55,7 @@ int menu() {
     return op;
 }
 
-void incluir(struct fornecedor cadastro[MAX_VALUE]) {
+void incluirFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
     for (int i = 0; i < MAX_VALUE; i++) {
         if (cadastro[i].codigo == 0) {
             printf("\n-- Incluir --\n");
@@ -89,7 +72,7 @@ void incluir(struct fornecedor cadastro[MAX_VALUE]) {
             }
 
             printf("Nome: ");
-            scanf("%s", &cadastro[i].nome);
+            scanf("%s", cadastro[i].nome);
             printf("CEP: ");
             scanf("%d", &cadastro[i].cep);
 
@@ -102,7 +85,7 @@ void incluir(struct fornecedor cadastro[MAX_VALUE]) {
             printf("Numero logradouro: ");
             scanf("%d", &cadastro[i].numLog);
             printf("Email: ");
-            scanf("%s", &cadastro[i].email);
+            scanf("%s", cadastro[i].email);
             printf("Telefone: ");
             scanf("%d", &cadastro[i].numTel);
             break;
@@ -110,7 +93,7 @@ void incluir(struct fornecedor cadastro[MAX_VALUE]) {
     }
 }
 
-void alterar(struct fornecedor cadastro[MAX_VALUE]) {
+void alterarFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
     int codigo;
     printf("\n-- Alterar --\n");
     printf("Digite o codigo: ");
@@ -119,32 +102,21 @@ void alterar(struct fornecedor cadastro[MAX_VALUE]) {
     for (int i = 0; i < MAX_VALUE; i++) {
         if (cadastro[i].codigo == codigo) {
             printf("Codigo Encontrado!\n");
-            printf("Codigo: ");
-            scanf("%d", &cadastro[i].codigo);
-
-            for (int j = 0; j < i; j++) {
-                if (cadastro[i].codigo == cadastro[j].codigo) {
-                    printf("Codigo ja cadastrado\n");
-                    cadastro[i].codigo = codigo;
-                    return;
-                }
-            }
 
             printf("Nome: ");
-            scanf("%s", &cadastro[i].nome);
+            scanf("%s", cadastro[i].nome);
             printf("CEP: ");
             scanf("%d", &cadastro[i].cep);
 
             if (!validarCEP(cadastro[i].cep)) {
                 printf("CEP invalido\n");
-                cadastro[i].codigo = codigo;
                 return;
             }
 
             printf("Numero logradouro: ");
             scanf("%d", &cadastro[i].numLog);
             printf("Email: ");
-            scanf("%s", &cadastro[i].email);
+            scanf("%s", cadastro[i].email);
             printf("Telefone: ");
             scanf("%d", &cadastro[i].numTel);
             printf("Cadastro alterado\n");
@@ -154,7 +126,7 @@ void alterar(struct fornecedor cadastro[MAX_VALUE]) {
     printf("Codigo nao encontrado.\n");
 }
 
-void excluir(struct fornecedor cadastro[MAX_VALUE]) {
+void excluirFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
     int codigo;
     printf("\n-- Excluir --\n");
     printf("Digite o codigo: ");
@@ -176,7 +148,7 @@ void excluir(struct fornecedor cadastro[MAX_VALUE]) {
     printf("Codigo nao encontrado.\n");
 }
 
-void consultar(struct fornecedor cadastro[MAX_VALUE]) {
+void consultarFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
     int codigo;
     printf("\n-- Consultar --\n");
     printf("Digite o codigo ou 0 para ver todos: ");
@@ -209,25 +181,14 @@ void consultar(struct fornecedor cadastro[MAX_VALUE]) {
     }
 }
 
-void consultarCEP() {
-    struct cep cep[MAX_VALUE] = {0};
-    carregarCep(cep);
+void salvarFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
+    struct stat st = {0};
 
-    printf("\n-- Consultar CEP --\n");
-
-    for (int i = 0; i < MAX_VALUE; i++) {
-        if (cep[i].cep != 0) {
-            printf("\nCEP: %d\n", cep[i].cep);
-            printf("Logradouro: %s\n", cep[i].logradouro);
-            printf("Bairro: %s\n", cep[i].bairro);
-            printf("Cidade: %s\n", cep[i].cidade);
-            printf("Estado: %s\n", cep[i].estado);
-        }
+    if (stat("../data", &st) == -1) {
+        mkdir("../data");
     }
-}
-
-void salvar(struct fornecedor cadastro[MAX_VALUE]) {
-    FILE *arq = fopen("fornecedores.txt", "w");
+    
+    FILE *arq = fopen("../data/fornecedores.txt", "w");
 
     if (arq == NULL) {
         printf("Erro ao abrir arquivo\n");
@@ -244,8 +205,14 @@ void salvar(struct fornecedor cadastro[MAX_VALUE]) {
     fclose(arq);
 }
 
-void carregar(struct fornecedor cadastro[MAX_VALUE]) {
-    FILE *arq = fopen("fornecedores.txt", "r");
+void carregarFornecedor(struct fornecedor cadastro[MAX_VALUE]) {
+    struct stat st = {0};
+
+    if (stat("../data", &st) == -1) {
+        mkdir("../data");
+    }
+    
+    FILE *arq = fopen("../data/fornecedores.txt", "r");
 
     if (arq == NULL) {
         printf("Erro ao abrir arquivo\n");
@@ -258,40 +225,41 @@ void carregar(struct fornecedor cadastro[MAX_VALUE]) {
     }
 
     fclose(arq);
-    printf("Dados carregados com sucesso!\n");
 }
 
-int main() {
+void fornecedor_main() {
     struct fornecedor fornecedor[MAX_VALUE] = {0};
     int op;
 
     do {
-        op = menu();
+        op = menu_fornecedor();
         switch (op) {
             case 1:
-                incluir(fornecedor);
+                incluirFornecedor(fornecedor);
                 break;
             case 2:
-                alterar(fornecedor);
+                alterarFornecedor(fornecedor);
                 break;
             case 3:
-                excluir(fornecedor);
+                excluirFornecedor(fornecedor);
                 break;
             case 4:
-                consultar(fornecedor);
+                consultarFornecedor(fornecedor);
                 break;
             case 5:
-                consultarCEP();
+                limparTela();
                 break;
             case 9:
-                carregar(fornecedor);
+                carregarFornecedor(fornecedor);
+                printf("Dados carregados com sucesso!\n");
                 break;
             case 0:
-                break;
+                salvarFornecedor(fornecedor);
+                return;
             default:
                 printf("Opção inválida\n");
         }
     } while (op != 0);
 
-    salvar(fornecedor);
+    salvarFornecedor(fornecedor); // Salva os dados ao sair do loop
 }

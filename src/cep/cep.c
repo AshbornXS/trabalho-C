@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define NUM_ESTADOS 27
 #define MAX_VALUE 5
@@ -20,13 +22,18 @@ struct cep {
     char logradouro[50], bairro[50], cidade[50], estado[3];
 };
 
-int menu() {
+void limparTela() {
+    system("cls || clear");
+}
+
+int menu_cep() {
     int op;
     printf("\n-- Cadastro --\n");
     printf("1 - Incluir\n");
     printf("2 - Alterar\n");
     printf("3 - Excluir\n");
     printf("4 - Consultar\n");
+    printf("5 - Limpar Tela\n");
     printf("\n");
     printf("9 - Carregar\n");
     printf("0 - Sair\n");
@@ -83,7 +90,7 @@ bool exibirEstado(char uf[3]) {
     return false;
 }
 
-void incluir(struct cep cadastro[MAX_VALUE]) {
+void incluirCep(struct cep cadastro[MAX_VALUE]) {
     for (int i = 0; i < MAX_VALUE; i++) {
         if (cadastro[i].cep == 0) {
             printf("\n-- Incluir --\n");
@@ -121,7 +128,7 @@ void incluir(struct cep cadastro[MAX_VALUE]) {
     }
 }
 
-void alterar(struct cep cadastro[MAX_VALUE]) {
+void alterarCep(struct cep cadastro[MAX_VALUE]) {
     int cep;
     printf("\n-- Alterar --\n");
     printf("Digite o CEP: ");
@@ -166,7 +173,7 @@ void alterar(struct cep cadastro[MAX_VALUE]) {
     printf("CEP nao encontrado.\n");
 }
 
-void excluir(struct cep cadastro[MAX_VALUE]) {
+void excluirCep(struct cep cadastro[MAX_VALUE]) {
     int cep;
     printf("\n-- Excluir --\n");
     printf("Digite o CEP: ");
@@ -187,7 +194,7 @@ void excluir(struct cep cadastro[MAX_VALUE]) {
     printf("CEP nao encontrado.\n");
 }
 
-void consultar(struct cep cadastro[MAX_VALUE]) {
+void consultarCep(struct cep cadastro[MAX_VALUE]) {
     int cep;
     printf("\n-- Consultar --\n");
     printf("Digite o CEP ou 0 para ver todos: ");
@@ -218,8 +225,14 @@ void consultar(struct cep cadastro[MAX_VALUE]) {
     }
 }
 
-void salvar(struct cep cadastro[MAX_VALUE]) {
-    FILE *arq = fopen("cep.txt", "w");
+void salvarCep(struct cep cadastro[MAX_VALUE]) {
+    struct stat st = {0};
+
+    if (stat("../data", &st) == -1) {
+        mkdir("../data");
+    }
+    
+    FILE *arq = fopen("../data/cep.txt", "w");
 
     if (arq == NULL) {
         printf("Erro ao abrir arquivo\n");
@@ -236,8 +249,14 @@ void salvar(struct cep cadastro[MAX_VALUE]) {
     fclose(arq);
 }
 
-void carregar(struct cep cadastro[MAX_VALUE]) {
-    FILE *arq = fopen("cep.txt", "r");
+void carregarCep(struct cep cadastro[MAX_VALUE]) {
+    struct stat st = {0};
+
+    if (stat("../data", &st) == -1) {
+        mkdir("../data");
+    }
+    
+    FILE *arq = fopen("../data/cep.txt", "r");
 
     if (arq == NULL) {
         printf("Erro ao abrir arquivo\n");
@@ -249,37 +268,41 @@ void carregar(struct cep cadastro[MAX_VALUE]) {
         i++;
     }
     fclose(arq);
-    printf("Dados carregados com sucesso!\n");
 }
 
-int main() {
+void cep_main() {
     struct cep cadastro[MAX_VALUE] = {0};
     int op;
 
     do {
-        op = menu();
+        op = menu_cep();
         switch (op) {
             case 1:
-                incluir(cadastro);
+                incluirCep(cadastro);
                 break;
             case 2:
-                alterar(cadastro);
+                alterarCep(cadastro);
                 break;
             case 3:
-                excluir(cadastro);
+                excluirCep(cadastro);
                 break;
             case 4:
-                consultar(cadastro);
+                consultarCep(cadastro);
+                break;
+            case 5:
+                limparTela();
                 break;
             case 9:
-                carregar(cadastro);
+                carregarCep(cadastro);
+                printf("Dados carregados com sucesso!\n");
                 break;
             case 0:
-                break;
+                salvarCep(cadastro);
+                return;
             default:
                 printf("Opcao invalida\n");
         }
     } while (op != 0);
 
-    salvar(cadastro);
+    salvarCep(cadastro);
 }
